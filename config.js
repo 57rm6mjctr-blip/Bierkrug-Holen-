@@ -1,5 +1,4 @@
-// Für die lokale Testversion leer lassen. Für die gemeinsame Online-Bestenliste
-// trägst du später die Supabase-Projekt-URL und den anon/public Key ein.
+// Nach dem Einrichten von Supabase hier die Projekt-URL und den öffentlichen anon/publishable-Key eintragen.
 window.BIERKRUG_CONFIG = {
   supabaseUrl: "",
   supabaseAnonKey: ""
