@@ -1,151 +1,28 @@
-<!doctype html>
-<html lang="de">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<meta name="theme-color" content="#243b2b">
-<title>Bierkrug holen</title>
-<link rel="manifest" href="manifest.webmanifest">
-<style>
-:root{--bg:#17251d;--panel:#243b2b;--cream:#f5edda;--gold:#e9bd61;--red:#d65b4d;--green:#7eb16c}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#344d38,#142018 70%);color:var(--cream);font-family:system-ui,-apple-system,Segoe UI,sans-serif;min-height:100vh;display:flex;justify-content:center;padding:18px}
-main{width:min(100%,760px)}header{text-align:center;margin:4px 0 14px}h1{margin:0;font-size:clamp(28px,6vw,42px);letter-spacing:.5px}header p{margin:5px 0;color:#d5d0bd}
-.panel{background:rgba(36,59,43,.94);border:1px solid #557052;border-radius:18px;padding:14px;box-shadow:0 12px 32px #0005}
-.hud{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}.stat{background:#17251d;border-radius:12px;padding:8px 12px;font-weight:700}.hearts{color:#ff7166;letter-spacing:2px}
-canvas{width:100%;height:auto;display:block;border-radius:12px;background:#9bc36c;image-rendering:pixelated;touch-action:none;border:3px solid #17251d}
-.controls{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
-button{border:0;border-radius:13px;padding:14px 12px;font-size:17px;font-weight:800;color:#1e2a20;background:var(--gold);box-shadow:0 4px 0 #a77d35;cursor:pointer;touch-action:manipulation}
-button:active{transform:translateY(3px);box-shadow:0 1px 0 #a77d35}button.secondary{background:#d9e5ca;box-shadow:0 4px 0 #82947a}button:disabled{opacity:.45}
-.row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1}
-input{min-width:0;border:1px solid #71856b;background:#17251d;color:white;border-radius:10px;padding:11px;font-size:16px;width:100%}
-h2{font-size:19px;margin:18px 0 8px}.hint{font-size:13px;color:#d5d0bd;line-height:1.5}.lists{display:grid;grid-template-columns:1fr 1fr;gap:12px}.listbox{background:#17251d;border-radius:12px;padding:10px;min-width:0}.listbox h3{margin:0 0 7px;font-size:15px}.listbox ol{margin:0;padding-left:22px;font-size:14px}.listbox li{padding:2px 0;overflow-wrap:anywhere}
-#message{min-height:24px;text-align:center;font-weight:700;margin-top:8px;color:#ffe0a0}
-.modal{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;padding:20px;z-index:5}.modal.show{display:flex}.dialog{max-width:420px;width:100%;background:#243b2b;border:1px solid #71856b;border-radius:18px;padding:22px;text-align:center}.dialog h2{margin-top:0}.dialog p{line-height:1.5}
-@media(max-width:520px){body{padding:10px}.panel{padding:10px}.lists{grid-template-columns:1fr}.stat{padding:7px 9px;font-size:14px}.controls button{font-size:16px;padding:15px 8px}}
-</style>
-</head>
-<body>
-<main>
-<header><h1>🍺 Bierkrug holen</h1><p>Hol den Krug vom Wirtshaus und bring ihn sicher zurück!</p></header>
-<section class="panel">
- <div class="hud">
-  <div class="stat">Punkte: <span id="score">0</span></div>
-  <div class="stat">Leben: <span id="lives" class="hearts">♥ ♥ ♥</span></div>
-  <div class="stat">Krüge: <span id="delivered">0</span></div>
- </div>
- <canvas id="game" width="480" height="600" aria-label="Spielfeld"></canvas>
- <div id="message">Drücke „Los geht's“ und laufe nach oben zum Bierkrug!</div>
- <div class="controls">
-  <button id="up">⬆ HOCHLAUFEN</button><button id="down">⬇ RUNTERLAUFEN</button>
- </div>
- <div class="row" style="margin-top:12px"><button id="start">▶ Los geht's</button><button class="secondary" id="pause">Ⅱ Pause</button></div>
- <p class="hint">Steuerung: Auf dem Handy die beiden Knöpfe gedrückt halten. Am PC funktionieren zusätzlich ↑ und ↓. Lauf nach oben zum Bierkrug und bring ihn nach unten. Kühe und Traktoren kosten ein Herz!</p>
-</section>
-<section class="panel" style="margin-top:14px">
- <h2>🏆 Familien-Bestenliste</h2>
- <div class="row"><input id="nickname" maxlength="18" placeholder="Dein Spielername"><input id="group" maxlength="16" placeholder="Gruppen-Code (optional)"></div>
- <p class="hint">Alle mit demselben Gruppen-Code sehen eine gemeinsame Gruppenwertung. Ohne Code zählt dein Ergebnis für die Gesamtwertung.</p>
- <div class="row"><button id="saveName">Name / Gruppe speichern</button><button class="secondary" id="refresh">↻ Aktualisieren</button></div>
- <div class="lists" style="margin-top:12px">
-  <div class="listbox"><h3>🌍 Gesamt</h3><ol id="globalList"><li>Noch keine Ergebnisse</li></ol></div>
-  <div class="listbox"><h3>👨‍👩‍👧‍👦 Deine Gruppe</h3><ol id="groupList"><li>Gruppen-Code eingeben</li></ol></div>
- </div>
- <p id="onlineStatus" class="hint">Lokale Bestenliste aktiv. Für eine gemeinsame Online-Liste siehe die Anleitung.</p>
-</section>
-</main>
-<div class="modal" id="endModal"><div class="dialog"><h2 id="endTitle">Spiel vorbei!</h2><p id="endText"></p><button id="again">Nochmal spielen</button></div></div>
-<script src="config.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-(() => {
-const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
-const $=id=>document.getElementById(id);
-const W=480,H=600, player={x:240,y:520,w:34,h:42,speed:245,carrying:false,invuln:0};
-let hazards=[],running=false,paused=false,score=0,lives=3,delivered=0,hasBeer=false,upHeld=false,downHeld=false,last=0,spawn=0,localScores=[];
-const lanes=[150,245,340,435];
-function loadLocal(){try{localScores=JSON.parse(localStorage.getItem('bierkrugScores')||'[]')}catch{localScores=[]}}
-function saveLocal(){localStorage.setItem('bierkrugScores',JSON.stringify(localScores))}
-function say(t){$('message').textContent=t}
-function drawPixelText(text,x,y,size=18,color='#fff'){ctx.font=`bold ${size}px monospace`;ctx.textAlign='center';ctx.fillStyle='#1c2b1d';ctx.fillText(text,x+2,y+2);ctx.fillStyle=color;ctx.fillText(text,x,y)}
-function draw(){
- ctx.clearRect(0,0,W,H);
- // pixel-art meadow
- ctx.fillStyle='#8fbd5c';ctx.fillRect(0,0,W,H);
- for(let y=0;y<H;y+=32){for(let x=0;x<W;x+=32){if(((x/32+y/32)%3)===0){ctx.fillStyle='#83b352';ctx.fillRect(x+5,y+7,3,3);ctx.fillRect(x+19,y+21,3,3)}}}
- // top barn and beer pickup
- ctx.fillStyle='#6b422c';ctx.fillRect(165,15,150,70);ctx.fillStyle='#b9573d';ctx.beginPath();ctx.moveTo(150,25);ctx.lineTo(240,-10);ctx.lineTo(330,25);ctx.fill();ctx.fillStyle='#f3d38b';ctx.fillRect(215,42,50,43);
- ctx.fillStyle='#d99a32';ctx.fillRect(226,45,27,30);ctx.fillStyle='#fff0bc';ctx.fillRect(226,41,27,7);ctx.fillStyle='#6b422c';ctx.fillRect(253,50,7,18);
- drawPixelText('BIERKRUG',240,105,13,'#fff4c9');
- // bottom farm gate
- ctx.fillStyle='#65472d';ctx.fillRect(0,565,W,35);for(let x=10;x<W;x+=38){ctx.fillStyle='#b88a52';ctx.fillRect(x,560,7,40)}
- drawPixelText('DEIN HOF',240,590,12,'#fff2c8');
- // hazard tracks
- lanes.forEach((y,i)=>{ctx.fillStyle=i%2?'#7aa74e':'#78a34b';ctx.fillRect(0,y-31,W,62);ctx.fillStyle='#9bca65';for(let x=0;x<W;x+=24)ctx.fillRect(x,y-2,12,3)});
- hazards.forEach(h=>drawHazard(h));
- // beer at top until picked
- if(!hasBeer){ctx.fillStyle='#d99a32';ctx.fillRect(222,115,36,34);ctx.fillStyle='#fff0b5';ctx.fillRect(222,111,36,7);ctx.fillRect(258,121,8,20);ctx.fillStyle='#fff';ctx.fillRect(230,122,20,5)}
- // player sprite
- if(!(player.invuln>0 && Math.floor(performance.now()/100)%2===0)){
-  ctx.fillStyle='#47331f';ctx.fillRect(player.x-13,player.y+25,11,14);ctx.fillRect(player.x+3,player.y+25,11,14);
-  ctx.fillStyle='#f0c18c';ctx.fillRect(player.x-13,player.y-8,26,25);
-  ctx.fillStyle='#e5e0ce';ctx.fillRect(player.x-15,player.y-19,30,10);ctx.fillStyle='#426b42';ctx.fillRect(player.x-12,player.y-9,24,22);
-  ctx.fillStyle='#c84e36';ctx.fillRect(player.x-17,player.y-25,34,7);ctx.fillRect(player.x-10,player.y-34,20,10);
-  ctx.fillStyle='#33251c';ctx.fillRect(player.x-6,player.y-1,3,3);ctx.fillRect(player.x+4,player.y-1,3,3);
-  if(hasBeer){ctx.fillStyle='#d99a32';ctx.fillRect(player.x+15,player.y-8,13,18);ctx.fillStyle='#fff0b5';ctx.fillRect(player.x+15,player.y-11,13,4);ctx.fillRect(player.x+28,player.y-5,4,11)}
- }
- if(!running){ctx.fillStyle='#14201699';ctx.fillRect(0,0,W,H);drawPixelText(paused?'PAUSE':'BIERKRUG HOLEN',240,285,26,'#fff2c8');drawPixelText('HOCH ZUM KRUG • RUNTER ZUM HOF',240,320,12,'#fff')}
-}
-function drawHazard(h){
- ctx.save();ctx.translate(h.x,h.y);
- if(h.type==='cow'){
-  ctx.fillStyle='#f2eee0';ctx.fillRect(-24,-13,48,27);ctx.fillStyle='#51483b';ctx.fillRect(-18,-12,12,12);ctx.fillRect(5,0,12,12);ctx.fillStyle='#d5a58e';ctx.fillRect(18,-5,10,13);
-  ctx.fillStyle='#51483b';ctx.fillRect(-17,10,7,9);ctx.fillRect(10,10,7,9);ctx.fillStyle='#f2eee0';ctx.fillRect(-20,-19,7,7);ctx.fillRect(13,-19,7,7);
- }else{
-  ctx.fillStyle='#bd3e2f';ctx.fillRect(-26,-14,42,23);ctx.fillStyle='#e7bd54';ctx.fillRect(-8,-27,19,17);ctx.fillStyle='#9bd1dc';ctx.fillRect(-5,-24,12,11);ctx.fillStyle='#343b32';ctx.fillRect(-21,7,14,14);ctx.fillRect(9,7,14,14);ctx.fillStyle='#e7bd54';ctx.fillRect(17,-12,9,6);
- }
- ctx.restore();
-}
-function spawnHazard(){
- const lane=lanes[Math.floor(Math.random()*lanes.length)],fromLeft=Math.random()<.5;
- hazards.push({type:Math.random()<.55?'cow':'tractor',x:fromLeft?-45:525,y:lane,v:(fromLeft?1:-1)*(105+Math.random()*70+delivered*5),w:52});
-}
-function reset(){score=0;lives=3;delivered=0;hasBeer=false;player.x=240;player.y=520;player.invuln=0;hazards=[];spawn=0;running=true;paused=false;$('score').textContent=score;$('lives').textContent='♥ ♥ ♥';$('delivered').textContent=delivered;$('endModal').classList.remove('show');say('Los geht’s! Hol den Bierkrug oben ab.');last=performance.now();draw()}
-function hit(){if(player.invuln>0)return;lives--;player.invuln=1.5;$('lives').textContent='♥ '.repeat(lives).trim()||'—';hasBeer=false;player.y=Math.min(520,player.y+35);say('Autsch! Ein Leben verloren. Der Krug ist weg!');if(lives<=0)gameOver()}
-function gameOver(){running=false;paused=false;const name=localStorage.getItem('bierkrugName')||'Spieler';const group=localStorage.getItem('bierkrugGroup')||'';localScores.push({name,group,score:delivered,when:Date.now()});localScores.sort((a,b)=>b.score-a.score);localScores=localScores.slice(0,50);saveLocal();submitOnline(name,group,delivered);$('endTitle').textContent='Ausgetrunken!';$('endText').textContent=`Du hast ${delivered} Bierkrug${delivered===1?'':'e'} geholt und ${score} Punkte gesammelt.`;$('endModal').classList.add('show');renderLists();draw()}
-function update(dt){
- if(!running||paused)return;
- if(upHeld)player.y-=player.speed*dt;if(downHeld)player.y+=player.speed*dt;
- player.y=Math.max(125,Math.min(535,player.y));player.invuln=Math.max(0,player.invuln-dt);
- spawn-=dt;if(spawn<=0){spawnHazard();spawn=1.15+Math.random()*.65}
- hazards.forEach(h=>h.x+=h.v*dt);hazards=hazards.filter(h=>h.x>-65&&h.x<545);
- for(const h of hazards){if(Math.abs(h.x-player.x)<32&&Math.abs(h.y-player.y)<25)hit()}
- if(!hasBeer&&player.y<145){hasBeer=true;score+=10;$('score').textContent=score;say('Bier geladen! Jetzt heil zurück zum Hof!')}
- if(hasBeer&&player.y>515){hasBeer=false;delivered++;score+=90;$('delivered').textContent=delivered;$('score').textContent=score;say('Prost! Ein Bier sicher nach Hause gebracht!')}
-}
-function loop(t){const dt=Math.min((t-last)/1000,.04);last=t;update(dt);draw();requestAnimationFrame(loop)}
-function bindHold(el,set){el.addEventListener('pointerdown',e=>{e.preventDefault();set(true);el.setPointerCapture(e.pointerId)});['pointerup','pointercancel','lostpointercapture'].forEach(ev=>el.addEventListener(ev,()=>set(false)))}
-bindHold($('up'),v=>upHeld=v);bindHold($('down'),v=>downHeld=v);
-window.addEventListener('keydown',e=>{if(e.key==='ArrowUp'||e.key==='w')upHeld=true;if(e.key==='ArrowDown'||e.key==='s')downHeld=true});
-window.addEventListener('keyup',e=>{if(e.key==='ArrowUp'||e.key==='w')upHeld=false;if(e.key==='ArrowDown'||e.key==='s')downHeld=false});
-$('start').onclick=reset;$('again').onclick=reset;
-$('pause').onclick=()=>{if(running){paused=!paused;say(paused?'Pausiert.':'Weiter geht’s!')}};
-$('saveName').onclick=()=>{const n=$('nickname').value.trim().slice(0,18)||'Spieler';const g=$('group').value.trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'').slice(0,16);localStorage.setItem('bierkrugName',n);localStorage.setItem('bierkrugGroup',g);say('Name und Gruppe gespeichert.');renderLists()};
-$('refresh').onclick=()=>{renderLists();loadOnline()};
-function renderLists(){
- const name=localStorage.getItem('bierkrugName')||'Spieler',group=localStorage.getItem('bierkrugGroup')||'';
- const global=localScores.slice().sort((a,b)=>b.score-a.score).slice(0,10);
- $('globalList').innerHTML=global.length?global.map(x=>`<li>${esc(x.name)} – ${x.score} Krüge</li>`).join(''):'<li>Noch keine Ergebnisse</li>';
- const filtered=group?localScores.filter(x=>x.group===group).sort((a,b)=>b.score-a.score).slice(0,10):[];
- $('groupList').innerHTML=group?(filtered.length?filtered.map(x=>`<li>${esc(x.name)} – ${x.score} Krüge</li>`).join(''):'<li>Noch keine Ergebnisse</li>'):'<li>Gruppen-Code eingeben</li>';
-}
-function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-const cfg=window.BIERKRUG_CONFIG||{};
-let sb=null;
-if(cfg.supabaseUrl&&cfg.supabaseAnonKey&&window.supabase){sb=window.supabase.createClient(cfg.supabaseUrl,cfg.supabaseAnonKey)}
-async function submitOnline(name,group,count){if(!sb)return;try{const {error}=await sb.from('scores').insert({player_name:name,group_code:group||null,beers:count});if(error)throw error;$('onlineStatus').textContent='Online-Bestenliste verbunden.';loadOnline()}catch(e){$('onlineStatus').textContent='Online-Speichern fehlgeschlagen: '+e.message}}
-async function loadOnline(){if(!sb){$('onlineStatus').textContent='Lokale Bestenliste aktiv. Für eine gemeinsame Online-Liste siehe README.';return}try{let q=sb.from('scores').select('player_name,group_code,beers').order('beers',{ascending:false}).limit(10);const {data,error}=await q;if(error)throw error;$('globalList').innerHTML=data.length?data.map(x=>`<li>${esc(x.player_name)} – ${x.beers} Krüge</li>`).join(''):'<li>Noch keine Ergebnisse</li>';const g=localStorage.getItem('bierkrugGroup')||'';if(g){const r=await sb.from('scores').select('player_name,beers').eq('group_code',g).order('beers',{ascending:false}).limit(10);if(r.error)throw r.error;$('groupList').innerHTML=r.data.length?r.data.map(x=>`<li>${esc(x.player_name)} – ${x.beers} Krüge</li>`).join(''):'<li>Noch keine Ergebnisse</li>'}$('onlineStatus').textContent='Gemeinsame Online-Bestenliste aktiv.'}catch(e){$('onlineStatus').textContent='Online-Liste nicht erreichbar: '+e.message}}
-loadLocal();$('nickname').value=localStorage.getItem('bierkrugName')||'';$('group').value=localStorage.getItem('bierkrugGroup')||'';renderLists();loadOnline();draw();requestAnimationFrame(loop);
-if('serviceWorker'in navigator && location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});
-})();
-</script>
-</body></html>
+🍺 Bierkrug holen
+Hol den Krug und bring ihn sicher zum Hof!
+Punkte: 0
+Leben: ♥ ♥ ♥
+Krüge: 0
+
+Drücke „Los geht's“ und laufe nach oben zum Bierkrug!
+⬆ HOCHLAUFEN
+⬇ RUNTERLAUFEN
+▶ Los geht's
+Ⅱ Pause
+Sprache
+DeutschEnglish
+♫ Musik: Aus
+Halte die Knöpfe gedrückt: nach oben zum Krug, nach unten zum Hof. Kühe und Traktoren kosten ein Herz!
+🏆 Bestenlisten
+
+
+
+＋ Gruppe erstellen
+Erstelle eine Gruppe. Du bekommst einen Einladungscode, den deine Freunde eingeben können.
+Name / Gruppe speichern
+↻ Aktualisieren
+🌍 Weltweit
+	1	Noch keine Ergebnisse
+👨‍👩‍👧‍👦 Meine Gruppe
+	1	Gruppen-Code eingeben
+Online-Bestenliste noch nicht verbunden.
